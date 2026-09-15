@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Consulta taxonomía y evaluaciones de la Lista Roja de la UICN desde Excel, CSV o entrada manual. El procesamiento ocurre en el navegador." />
+  <meta name="referrer" content="no-referrer" />
+  <title>IUCN Tool · Taxonomía y Lista Roja</title>
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260911x" />
+</head>
+<body>
+  <main class="app-shell" id="appShell">
+    <header class="brand" aria-labelledby="appTitle">
+      <h1 id="appTitle">IUCN Tool</h1>
+      <p>Taxonomía y Lista Roja</p>
+    </header>
+
+    <section class="panel landing-panel" id="landingView" aria-label="Nueva consulta">
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Arrastrar o seleccionar archivo Excel o CSV">
+        <svg class="hero-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8m-6-6 6 6m-6-6v6h6"/></svg>
+        <h2>Arrastra tu Excel o CSV aquí</h2>
+        <p>o selecciónalo con el botón</p>
+      </div>
+
+      <input id="fileInput" type="file" accept=".xlsx,.xls,.csv,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden />
+
+      <div class="landing-actions">
+        <button class="btn btn-primary btn-lg" id="selectFileBtn" type="button">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8m-6-6 6 6m-6-6v6h6"/></svg>
+          Seleccionar archivo
+        </button>
+        <button class="btn btn-secondary btn-lg" id="manualBtn" type="button">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
+          Ingresar manualmente
+        </button>
+      </div>
+
+      <p class="privacy-note">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        Tus archivos se procesan localmente. El token permanece solo en memoria durante la consulta y no se almacena.
+      </p>
+      <p class="connector-status connector-checking" id="connectorStatus" aria-live="polite">
+        <span class="connector-dot" aria-hidden="true"></span>
+        <span>Detectando Jocotoco IUCN Connector…</span>
+      </p>
+    </section>
+
+    <section class="panel workspace-panel hidden" id="workspaceView" aria-label="Consulta IUCN">
+      <div class="source-banner" id="sourceBanner">
+        <div class="source-main">
+          <span class="status-dot status-dot-ok" aria-hidden="true">✓</span>
+          <div>
+            <strong id="sourceLabel">Archivo cargado</strong>
+            <span class="source-meta" id="sourceMeta"></span>
+          </div>
+        </div>
+        <div class="summary-inline" id="summaryInline" aria-live="polite">
+          <span><b id="countFound">0</b> encontradas</span>
+          <span><b id="countNotFound">0</b> no encontradas</span>
+          <span><b id="countErrors">0</b> errores</span>
+        </div>
+        <button class="icon-btn" id="resetBtn" type="button" aria-label="Cancelar y volver al inicio">×</button>
+      </div>
+
+      <div id="fileConfig" class="config-grid">
+        <label class="field" id="sheetField">
+          <span>Hoja</span>
+          <select id="sheetSelect"></select>
+        </label>
+        <label class="field">
+          <span>Columna a consultar</span>
+          <select id="columnSelect"></select>
+        </label>
+        <label class="field field-token">
+          <span>Token IUCN</span>
+          <div class="input-with-action">
+            <input id="tokenInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Pega tu token" />
+            <button class="eye-btn" id="toggleTokenBtn" type="button" aria-label="Mostrar u ocultar token">◉</button>
+          </div>
+        </label>
+        <button class="btn btn-primary consult-btn" id="consultBtn" type="button">Consultar</button>
+      </div>
+
+      <div id="manualConfig" class="manual-config hidden">
+        <label class="field field-wide">
+          <span>Nombres científicos</span>
+          <textarea id="manualSpecies" rows="8" placeholder="Escribe o pega una especie por línea\n\nAmazona lilacina\nGrallaria ridgelyi\nOreotrochilus cyanolaemus"></textarea>
+          <small>Una especie por línea. También puedes pegar una columna copiada desde Excel.</small>
+        </label>
+        <div class="manual-actions-row">
+          <label class="field field-token">
+            <span>Token IUCN</span>
+            <div class="input-with-action">
+              <input id="manualTokenInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Pega tu token" />
+              <button class="eye-btn" id="toggleManualTokenBtn" type="button" aria-label="Mostrar u ocultar token">◉</button>
+            </div>
+          </label>
+          <button class="btn btn-primary consult-btn" id="manualConsultBtn" type="button">Consultar</button>
+        </div>
+      </div>
+
+      <p class="privacy-note privacy-note-workspace">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        Tus archivos se procesan localmente. El token permanece solo en memoria durante la consulta y no se almacena.
+      </p>
+
+      <section class="progress-block hidden" id="progressBlock" aria-live="polite">
+        <div class="progress-head">
+          <strong id="progressTitle">Consultando IUCN</strong>
+          <span id="progressText">0 / 0 · 0%</span>
+        </div>
+        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressTrack">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+      </section>
+
+      <div class="divider hidden" id="resultsDivider"></div>
+
+      <section class="results-section hidden" id="resultsSection">
+        <div class="results-toolbar">
+          <div>
+            <h2>Resultados</h2>
+            <p id="resultsMeta">0 registros</p>
+          </div>
+          <div class="table-tools">
+            <label class="search-box">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input id="tableSearch" type="search" placeholder="Buscar en la tabla" autocomplete="off" />
+            </label>
+            <label class="rows-select">
+              <span>Filas</span>
+              <select id="pageSizeSelect">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="250">250</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="table-frame">
+          <table id="resultsTable">
+            <thead id="resultsHead"></thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+
+        <div class="table-footer">
+          <span id="paginationMeta">Mostrando 0–0 de 0</span>
+          <nav class="pagination" id="pagination" aria-label="Paginación"></nav>
+        </div>
+
+        <div class="download-row">
+          <button class="btn btn-secondary btn-download" id="downloadBtn" type="button" disabled>
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
+            Descargar Excel
+          </button>
+        </div>
+      </section>
+    </section>
+
+    <div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
+  </main>
+
+  <!-- SheetJS Community Edition. Solo descarga código del lector/escritor de hojas; los datos permanecen en el navegador. -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" referrerpolicy="no-referrer"></script>
+  <script src="assets/js/config.js?v=20260911x"></script>
+  <script src="assets/js/extension-bridge.js?v=20260911x"></script>
+  <script src="assets/js/iucn-core.js?v=20260911x"></script>
+  <script src="assets/js/table.js?v=20260911x"></script>
+  <script src="assets/js/app.js?v=20260911x"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Jocotoco IUCN Connector",
+  "version": "1.0.0",
+  "description": "Conector local mínimo entre IUCN Tool y la API v4 de IUCN. No almacena archivos ni tokens.",
+  "host_permissions": [
+    "https://api.iucnredlist.org/*"
+  ],
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "action": {
+    "default_title": "Jocotoco IUCN Connector",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://jocoacoustics.github.io/*",
+        "http://127.0.0.1/*",
+        "http://localhost/*"
+      ],
+      "js": [
+        "content-script.js"
+      ],
+      "run_at": "document_start"
+    }
+  ]
+}
