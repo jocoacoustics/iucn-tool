@@ -39,3 +39,14 @@ Verifican:
 - El botón de extensiones intenta abrir la ruta interna y la copia como respaldo.
 - El token recordado se recupera al iniciar y puede eliminarse con **Olvidar**.
 - La persistencia no usa `localStorage`, `sessionStorage`, IndexedDB, cookies ni `chrome.storage.sync`.
+
+
+## UX instalación 2026-09-14
+
+- La app permanece bloqueada hasta detectar el conector.
+- Se eliminó el intento de abrir `chrome://extensions` / `edge://extensions` desde la web.
+- La ventana muestra la ruta correcta según Chrome o Edge para copiar/pegar en la barra de direcciones.
+- Chrome usa el texto actual **Cargar extensión sin empaquetar**.
+- Edge usa **Cargar desempaquetado**.
+- El control **Recordar token** está en la misma línea del campo del token y usa un switch compacto.
+- Desmarcar “Recordar token” borra la persistencia local sin vaciar el token de la sesión actual.

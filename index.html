@@ -6,7 +6,7 @@
   <meta name="description" content="Consulta taxonomía y evaluaciones de la Lista Roja de la UICN desde Excel, CSV o entrada manual. El procesamiento ocurre en el navegador." />
   <meta name="referrer" content="no-referrer" />
   <title>IUCN Tool · Taxonomía y Lista Roja</title>
-  <link rel="stylesheet" href="assets/css/styles.css?v=20260914b" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260914c" />
 </head>
 <body class="connector-locked">
   <main class="app-shell" id="appShell">
@@ -70,13 +70,19 @@
         </label>
         <div class="field field-token">
           <span>Token IUCN</span>
-          <div class="input-with-action">
-            <input id="tokenInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Pega tu token" />
-            <button class="eye-btn" id="toggleTokenBtn" type="button" aria-label="Mostrar u ocultar token">◉</button>
-          </div>
-          <div class="token-persistence">
-            <label class="remember-token"><input id="rememberTokenCheckbox" type="checkbox" /> <span>Recordar token en este navegador</span></label>
-            <button class="token-forget hidden" id="forgetTokenBtn" type="button">Olvidar</button>
+          <div class="token-row">
+            <div class="input-with-action">
+              <input id="tokenInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Pega tu token" />
+              <button class="eye-btn" id="toggleTokenBtn" type="button" aria-label="Mostrar u ocultar token">◉</button>
+            </div>
+            <div class="token-remember-card">
+              <label class="remember-token">
+                <input id="rememberTokenCheckbox" type="checkbox" />
+                <span class="remember-switch" aria-hidden="true"></span>
+                <span class="remember-copy">Recordar token</span>
+              </label>
+              <button class="token-forget hidden" id="forgetTokenBtn" type="button">Olvidar</button>
+            </div>
           </div>
           <small class="token-storage-status" id="tokenStorageStatus"></small>
         </div>
@@ -92,13 +98,19 @@
         <div class="manual-actions-row">
           <div class="field field-token">
             <span>Token IUCN</span>
-            <div class="input-with-action">
-              <input id="manualTokenInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Pega tu token" />
-              <button class="eye-btn" id="toggleManualTokenBtn" type="button" aria-label="Mostrar u ocultar token">◉</button>
-            </div>
-            <div class="token-persistence">
-              <label class="remember-token"><input id="manualRememberTokenCheckbox" type="checkbox" /> <span>Recordar token en este navegador</span></label>
-              <button class="token-forget hidden" id="manualForgetTokenBtn" type="button">Olvidar</button>
+            <div class="token-row">
+              <div class="input-with-action">
+                <input id="manualTokenInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Pega tu token" />
+                <button class="eye-btn" id="toggleManualTokenBtn" type="button" aria-label="Mostrar u ocultar token">◉</button>
+              </div>
+              <div class="token-remember-card">
+                <label class="remember-token">
+                  <input id="manualRememberTokenCheckbox" type="checkbox" />
+                  <span class="remember-switch" aria-hidden="true"></span>
+                  <span class="remember-copy">Recordar token</span>
+                </label>
+                <button class="token-forget hidden" id="manualForgetTokenBtn" type="button">Olvidar</button>
+              </div>
             </div>
             <small class="token-storage-status" id="manualTokenStorageStatus"></small>
           </div>
@@ -185,9 +197,9 @@
       <ol class="connector-modal-steps">
         <li><span>Descarga el conector (.zip).</span></li>
         <li><span>Descomprime el ZIP en una carpeta permanente.</span></li>
-        <li><span>Abre la página de extensiones de tu navegador.</span></li>
-        <li><span>Activa <strong>Modo de desarrollador</strong>.</span></li>
-        <li><span>Haz clic en <strong>Cargar descomprimida</strong> y selecciona la carpeta que contiene <code>manifest.json</code>.</span></li>
+        <li><span>Copia la ruta de extensiones que aparece abajo y pégala en la barra de direcciones del navegador.</span></li>
+        <li><span>En la página <strong>Extensiones</strong>, activa <strong>Modo de desarrollador</strong>.</span></li>
+        <li><span>Haz clic en <strong id="loadUnpackedLabel">Cargar extensión sin empaquetar</strong> y selecciona la carpeta que contiene <code>manifest.json</code>.</span></li>
         <li><span>Vuelve a IUCN Tool y recarga la página.</span></li>
       </ol>
 
@@ -196,11 +208,14 @@
         Descargar conector (.zip)
       </a>
 
-      <button class="connector-browser-button" id="openExtensionsBtn" type="button">
+      <div class="connector-route-card" aria-label="Ruta de extensiones del navegador">
         <img id="browserIcon" src="assets/icons/chrome.svg" alt="" aria-hidden="true" />
-        <span><strong>Abrir extensiones</strong><small id="browserRoute">chrome://extensions</small></span>
-      </button>
-      <p class="connector-open-note" id="connectorOpenNote">Si el navegador no permite abrir su página interna automáticamente, la ruta se copiará para que la pegues en la barra de direcciones.</p>
+        <div>
+          <span>Ruta de extensiones</span>
+          <code id="browserRoute">chrome://extensions</code>
+        </div>
+      </div>
+      <p class="connector-open-note">Copia esa ruta y pégala directamente en la barra de direcciones. Las páginas web no pueden abrir de forma fiable las URLs internas del navegador.</p>
 
       <button class="connector-retry" id="connectorRetryBtn" type="button">Ya lo instalé · Recargar y comprobar</button>
       <p class="connector-modal-foot">Cuando el conector esté disponible, esta ventana desaparecerá automáticamente y se habilitará IUCN Tool.</p>
@@ -210,9 +225,9 @@
   <!-- SheetJS Community Edition. Solo descarga código del lector/escritor de hojas; los datos permanecen en el navegador. -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" referrerpolicy="no-referrer"></script>
   <script src="assets/js/config.js?v=20260911x"></script>
-  <script src="assets/js/extension-bridge.js?v=20260914b"></script>
-  <script src="assets/js/iucn-core.js?v=20260914b"></script>
-  <script src="assets/js/table.js?v=20260914b"></script>
-  <script src="assets/js/app.js?v=20260914b"></script>
+  <script src="assets/js/extension-bridge.js?v=20260914c"></script>
+  <script src="assets/js/iucn-core.js?v=20260914c"></script>
+  <script src="assets/js/table.js?v=20260914c"></script>
+  <script src="assets/js/app.js?v=20260914c"></script>
 </body>
 </html>

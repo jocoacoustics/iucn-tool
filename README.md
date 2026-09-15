@@ -32,11 +32,11 @@ La ventana incluye:
 
 - descarga directa de `Jocotoco-IUCN-Connector.zip`;
 - instrucciones completas;
-- un solo botón **Abrir extensiones**;
-- detección automática de Chrome o Edge para mostrar el icono y la ruta correctos;
+- detección automática de Chrome o Edge para mostrar **solo la ruta interna correcta** y el icono correspondiente;
+- el nombre del botón de carga de extensión adaptado al navegador;
 - botón **Ya lo instalé · Recargar y comprobar**.
 
-> Los navegadores pueden impedir que una página HTTPS abra directamente una URL interna como `chrome://extensions`. Por eso el botón también copia la ruta correspondiente como respaldo.
+La aplicación **no intenta abrir** `chrome://extensions` ni `edge://extensions` desde la web, porque los navegadores pueden bloquear las URLs internas iniciadas por una página HTTPS. En su lugar, muestra la ruta correcta para copiarla y pegarla en la barra de direcciones.
 
 ## Instalación del conector — una sola vez
 
@@ -49,14 +49,14 @@ La ventana incluye:
    Documentos/Jocotoco-IUCN-Connector/
    ```
 
-3. Pulsa **Abrir extensiones**. Si Chrome no permite abrir automáticamente su página interna, pega en la barra de direcciones la ruta que quedó copiada:
+3. IUCN Tool mostrará la ruta correcta para Chrome. Cópiala y pégala directamente en la barra de direcciones:
 
    ```text
    chrome://extensions
    ```
 
-4. Activa **Modo de desarrollador**.
-5. Pulsa **Cargar descomprimida**.
+4. En la página **Extensiones**, activa **Modo de desarrollador**.
+5. Pulsa **Cargar extensión sin empaquetar**.
 6. Selecciona la carpeta que contiene directamente:
 
    ```text
@@ -73,13 +73,13 @@ La ventana incluye:
 
 ### Microsoft Edge
 
-El proceso es idéntico. IUCN Tool detecta Edge y usa:
+El proceso es idéntico. IUCN Tool detecta Edge y muestra:
 
 ```text
 edge://extensions
 ```
 
-En Edge la opción suele aparecer como **Cargar desempaquetado / Load unpacked**.
+Copia esa ruta y pégala en la barra de direcciones. En Edge, activa **Modo de desarrollador** y pulsa **Cargar desempaquetado**.
 
 ## Uso
 
@@ -88,8 +88,8 @@ Una vez instalado el conector:
 1. Abre IUCN Tool.
 2. La ventana de instalación debe desaparecer automáticamente.
 3. Carga un Excel/CSV o pulsa **Ingresar manualmente**.
-4. Introduce el token IUCN.
-5. Opcionalmente marca **Recordar token en este navegador**.
+4. Introduce el token IUCN. A la derecha del campo puedes activar **Recordar token**.
+5. Si lo activas, el token queda guardado únicamente en la extensión local de ese navegador.
 6. Pulsa **Consultar**.
 7. Descarga el XLSX resultante.
 
@@ -105,7 +105,8 @@ Si el usuario marca **Recordar token en este navegador**:
 - no utiliza `localStorage`, `sessionStorage`, IndexedDB ni cookies de la página;
 - no se envía a servidores de Jocotoco;
 - se recupera automáticamente al volver a abrir IUCN Tool;
-- puede eliminarse con **Olvidar**.
+- puede eliminarse con **Olvidar**;
+- el control **Recordar token** aparece en la misma línea que el campo del token para mantener la interfaz compacta.
 
 El token sí se transmite por HTTPS a IUCN cuando se realiza una consulta, porque es la credencial requerida por IUCN API v4.
 

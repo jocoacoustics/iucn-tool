@@ -12,8 +12,8 @@
     resultsDivider: $("resultsDivider"), resultsSection: $("resultsSection"), resultsMeta: $("resultsMeta"), tableSearch: $("tableSearch"),
     pageSizeSelect: $("pageSizeSelect"), resultsHead: $("resultsHead"), resultsBody: $("resultsBody"), paginationMeta: $("paginationMeta"),
     pagination: $("pagination"), downloadBtn: $("downloadBtn"), toast: $("toast"),
-    connectorGate: $("connectorGate"), openExtensionsBtn: $("openExtensionsBtn"), browserIcon: $("browserIcon"), browserRoute: $("browserRoute"),
-    connectorOpenNote: $("connectorOpenNote"), connectorRetryBtn: $("connectorRetryBtn"),
+    connectorGate: $("connectorGate"), browserIcon: $("browserIcon"), browserRoute: $("browserRoute"), loadUnpackedLabel: $("loadUnpackedLabel"),
+    connectorRetryBtn: $("connectorRetryBtn"),
     rememberTokenCheckbox: $("rememberTokenCheckbox"), manualRememberTokenCheckbox: $("manualRememberTokenCheckbox"),
     forgetTokenBtn: $("forgetTokenBtn"), manualForgetTokenBtn: $("manualForgetTokenBtn"),
     tokenStorageStatus: $("tokenStorageStatus"), manualTokenStorageStatus: $("manualTokenStorageStatus")
@@ -84,14 +84,16 @@
 
   function detectedBrowser() {
     const ua = String(navigator.userAgent || "");
-    return /Edg\//.test(ua) ? { name: "Edge", route: "edge://extensions", icon: "assets/icons/edge.svg" } : { name: "Chrome", route: "chrome://extensions", icon: "assets/icons/chrome.svg" };
+    return /Edg\//.test(ua)
+      ? { name: "Edge", route: "edge://extensions", icon: "assets/icons/edge.svg", loadLabel: "Cargar desempaquetado" }
+      : { name: "Chrome", route: "chrome://extensions", icon: "assets/icons/chrome.svg", loadLabel: "Cargar extensión sin empaquetar" };
   }
 
-  function configureBrowserButton() {
+  function configureBrowserGuide() {
     const browser = detectedBrowser();
     if (el.browserRoute) el.browserRoute.textContent = browser.route;
     if (el.browserIcon) el.browserIcon.src = browser.icon;
-    if (el.openExtensionsBtn) el.openExtensionsBtn.setAttribute("aria-label", `Abrir extensiones en ${browser.name}`);
+    if (el.loadUnpackedLabel) el.loadUnpackedLabel.textContent = browser.loadLabel;
     return browser;
   }
 
@@ -106,7 +108,7 @@
     [el.forgetTokenBtn, el.manualForgetTokenBtn].forEach(x => { if (x) x.classList.toggle("hidden", !saved); });
     [el.tokenStorageStatus, el.manualTokenStorageStatus].forEach(x => {
       if (!x) return;
-      x.textContent = saved ? "Guardado solo en esta extensión local." : "Opcional. No se sincroniza ni se guarda en servidores nuestros.";
+      x.textContent = "";
       x.classList.toggle("is-saved", saved);
     });
   }
@@ -142,20 +144,25 @@
     renderTokenStorage();
   }
 
-  async function forgetSavedToken() {
+  async function forgetSavedToken(clearInputs = true) {
     try {
+      const currentToken = el.tokenInput.value || el.manualTokenInput.value || "";
       if (globalThis.IUCNExtensionBridge) await globalThis.IUCNExtensionBridge.clearToken(1800);
       state.savedToken = ""; state.tokenSaved = false;
-      el.tokenInput.value = ""; el.manualTokenInput.value = "";
+      if (clearInputs) {
+        el.tokenInput.value = ""; el.manualTokenInput.value = "";
+      } else {
+        el.tokenInput.value = currentToken; el.manualTokenInput.value = currentToken;
+      }
       renderTokenStorage();
-      showToast("Token olvidado de este navegador.");
+      showToast(clearInputs ? "Token olvidado de este navegador." : "El token ya no se recordará en este navegador.");
     } catch (err) {
       showToast("No se pudo borrar el token local.");
     }
   }
 
   async function refreshConnectorStatus() {
-    configureBrowserButton();
+    configureBrowserGuide();
     const wasReady = state.connectorReady;
     const ok = !!(globalThis.IUCNExtensionBridge && await globalThis.IUCNExtensionBridge.ping(1400));
     state.connectorReady = ok;
@@ -361,8 +368,8 @@
   el.toggleTokenBtn.addEventListener("click",()=>togglePassword(el.tokenInput)); el.toggleManualTokenBtn.addEventListener("click",()=>togglePassword(el.manualTokenInput));
   el.tokenInput.addEventListener("input",()=>{ el.manualTokenInput.value=el.tokenInput.value; });
   el.manualTokenInput.addEventListener("input",()=>{ el.tokenInput.value=el.manualTokenInput.value; });
-  el.rememberTokenCheckbox.addEventListener("change",()=>{ el.manualRememberTokenCheckbox.checked=el.rememberTokenCheckbox.checked; if(!el.rememberTokenCheckbox.checked && state.tokenSaved) forgetSavedToken(); });
-  el.manualRememberTokenCheckbox.addEventListener("change",()=>{ el.rememberTokenCheckbox.checked=el.manualRememberTokenCheckbox.checked; if(!el.manualRememberTokenCheckbox.checked && state.tokenSaved) forgetSavedToken(); });
+  el.rememberTokenCheckbox.addEventListener("change",()=>{ el.manualRememberTokenCheckbox.checked=el.rememberTokenCheckbox.checked; if(!el.rememberTokenCheckbox.checked && state.tokenSaved) forgetSavedToken(false); });
+  el.manualRememberTokenCheckbox.addEventListener("change",()=>{ el.rememberTokenCheckbox.checked=el.manualRememberTokenCheckbox.checked; if(!el.manualRememberTokenCheckbox.checked && state.tokenSaved) forgetSavedToken(false); });
   el.forgetTokenBtn.addEventListener("click",forgetSavedToken); el.manualForgetTokenBtn.addEventListener("click",forgetSavedToken);
   el.consultBtn.addEventListener("click",()=>runQuery(namesFromFile(),el.tokenInput.value)); el.manualConsultBtn.addEventListener("click",()=>runQuery(namesFromManual(),el.manualTokenInput.value));
   el.downloadBtn.addEventListener("click",downloadExcel);
@@ -370,23 +377,10 @@
   ["dragleave","drop"].forEach(t=>el.dropzone.addEventListener(t,e=>{e.preventDefault();el.dropzone.classList.remove("dragover");}));
   el.dropzone.addEventListener("drop",e=>handleFile(e.dataTransfer.files[0]));
 
-  async function openBrowserExtensions() {
-    const browser = configureBrowserButton();
-    let copied = false;
-    try { await navigator.clipboard.writeText(browser.route); copied = true; } catch (_) {}
-    try { window.open(browser.route, "_blank", "noopener,noreferrer"); } catch (_) {}
-    if (el.connectorOpenNote) {
-      el.connectorOpenNote.textContent = copied
-        ? `Intentamos abrir ${browser.route}. Si el navegador lo bloqueó, la ruta ya quedó copiada: pégala en la barra de direcciones.`
-        : `Si no se abrió automáticamente, escribe ${browser.route} en la barra de direcciones.`;
-    }
-  }
-
-  el.openExtensionsBtn.addEventListener("click", openBrowserExtensions);
   el.connectorRetryBtn.addEventListener("click", ()=>window.location.reload());
 
   resetApp();
-  configureBrowserButton();
+  configureBrowserGuide();
   refreshConnectorStatus();
   window.addEventListener("focus", refreshConnectorStatus);
   setInterval(refreshConnectorStatus, 8000);
