@@ -44,3 +44,10 @@ Verifica que:
 ## Límite de esta QA
 
 No se incluye un token IUCN en el repositorio ni en las pruebas. La llamada live autenticada se valida con el token del usuario. El motor Python original ya fue validado live por el usuario; la extensión replica su header `Authorization: <token>` y endpoint API v4.
+
+## Onboarding y descarga integrada
+
+- `downloads/Jocotoco-IUCN-Connector.zip` existe dentro del sitio publicable.
+- `index.html` enlaza al ZIP mediante una ruta relativa.
+- Si el conector está disponible, el onboarding de instalación se oculta.
+- Si el conector no está disponible, se muestran descarga + instrucciones desplegables.

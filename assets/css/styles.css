@@ -108,15 +108,37 @@ button { cursor: pointer; }
 }
 .privacy-note svg { flex: 0 0 auto; width: 18px; height: 18px; stroke: #6c7c76; stroke-width: 1.8; }
 .privacy-note-workspace { justify-content: flex-start; margin: 16px 4px 0; }
-.connector-status {
-  margin: 12px auto 0; display: flex; align-items: center; justify-content: center; gap: 8px;
-  font-size: 13px; color: #64736e;
+.connector-card {
+  margin: 16px auto 0;
+  border: 1px solid #d8e0dc;
+  border-radius: 12px;
+  background: #fbfcfb;
+  padding: 13px 15px;
+  max-width: 780px;
+  transition: border-color .18s, background .18s, box-shadow .18s;
 }
-.connector-dot { width: 9px; height: 9px; border-radius: 50%; background: #9aa8a3; box-shadow: 0 0 0 3px rgba(154,168,163,.13); }
-.connector-status.connector-ok { color: #176b4a; font-weight: 650; }
-.connector-status.connector-ok .connector-dot { background: #248b53; box-shadow: 0 0 0 3px rgba(36,139,83,.14); }
-.connector-status.connector-missing { color: #9a5b20; }
-.connector-status.connector-missing .connector-dot { background: #c77a2b; box-shadow: 0 0 0 3px rgba(199,122,43,.14); }
+.connector-card-head { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.connector-copy { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.connector-copy strong { color: #52625c; font-size: .9rem; }
+.connector-copy span { color: var(--muted); font-size: .8rem; }
+.connector-dot { flex: 0 0 auto; width: 9px; height: 9px; border-radius: 50%; background: #9aa8a3; box-shadow: 0 0 0 3px rgba(154,168,163,.13); }
+.connector-card-ok { border-color: #bcdcc8; background: #f5fbf7; padding-top: 10px; padding-bottom: 10px; }
+.connector-card-ok .connector-dot { background: #248b53; box-shadow: 0 0 0 3px rgba(36,139,83,.14); }
+.connector-card-ok .connector-copy strong { color: #176b4a; }
+.connector-card-missing { border-color: #ecd4b7; background: #fffaf3; box-shadow: 0 6px 18px rgba(151,93,30,.05); }
+.connector-card-missing .connector-card-head { justify-content: flex-start; }
+.connector-card-missing .connector-dot { background: #c77a2b; box-shadow: 0 0 0 3px rgba(199,122,43,.14); }
+.connector-card-missing .connector-copy strong { color: #8b541f; }
+.connector-onboarding { margin-top: 12px; padding-top: 12px; border-top: 1px solid #eadcc9; }
+.connector-onboarding > p { margin: 0; color: #705b45; font-size: .88rem; line-height: 1.5; }
+.connector-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.connector-actions .btn { min-height: 44px; font-size: .9rem; }
+.connector-download { text-decoration: none; }
+.connector-help { background: #fff; }
+.connector-install-steps { margin-top: 13px; padding: 14px 16px; border-radius: 10px; background: #fff; border: 1px solid #eadfce; text-align: left; }
+.connector-install-steps ol { margin: 0; padding-left: 1.25rem; color: #4e5c57; font-size: .88rem; line-height: 1.62; }
+.connector-install-steps code { background: #f1f4f2; border-radius: 4px; padding: 1px 5px; font-size: .84em; }
+.connector-folder-note { margin: 10px 0 0; color: #7d552c; font-size: .82rem; }
 
 
 .source-banner {
@@ -234,4 +256,10 @@ th.sortable:hover { background: #edf3ef; }
   .table-footer { align-items: flex-start; flex-direction: column; padding-top: 12px; }
   .pagination { justify-content: flex-start; }
   .download-row .btn { width: 100%; }
+}
+
+@media (max-width: 640px) {
+  .connector-card-head { justify-content: flex-start; }
+  .connector-actions { display: grid; grid-template-columns: 1fr; }
+  .connector-actions .btn { width: 100%; }
 }

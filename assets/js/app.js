@@ -11,7 +11,9 @@
     progressTitle: $("progressTitle"), progressText: $("progressText"), progressTrack: $("progressTrack"), progressBar: $("progressBar"),
     resultsDivider: $("resultsDivider"), resultsSection: $("resultsSection"), resultsMeta: $("resultsMeta"), tableSearch: $("tableSearch"),
     pageSizeSelect: $("pageSizeSelect"), resultsHead: $("resultsHead"), resultsBody: $("resultsBody"), paginationMeta: $("paginationMeta"),
-    pagination: $("pagination"), downloadBtn: $("downloadBtn"), toast: $("toast"), connectorStatus: $("connectorStatus")
+    pagination: $("pagination"), downloadBtn: $("downloadBtn"), toast: $("toast"),
+    connectorCard: $("connectorCard"), connectorTitle: $("connectorTitle"), connectorSubtitle: $("connectorSubtitle"),
+    connectorOnboarding: $("connectorOnboarding"), connectorHelpBtn: $("connectorHelpBtn"), connectorInstallSteps: $("connectorInstallSteps")
   };
 
   const state = {
@@ -77,16 +79,28 @@
   function setBusy(busy) { el.consultBtn.disabled=busy; el.manualConsultBtn.disabled=busy; el.resetBtn.disabled=busy; el.downloadBtn.disabled=busy || !state.results.length; }
 
   async function refreshConnectorStatus() {
-    if (!el.connectorStatus) return false;
-    el.connectorStatus.className = "connector-status connector-checking";
-    el.connectorStatus.lastElementChild.textContent = "Detectando Jocotoco IUCN Connector…";
+    if (!el.connectorCard) return false;
+    el.connectorCard.className = "connector-card connector-card-checking";
+    el.connectorTitle.textContent = "Detectando Jocotoco IUCN Connector…";
+    el.connectorSubtitle.textContent = "Comprobando el conector local.";
+    el.connectorOnboarding.classList.add("hidden");
+
     const ok = !!(globalThis.IUCNExtensionBridge && await globalThis.IUCNExtensionBridge.ping(1200));
     if (ok) {
-      el.connectorStatus.className = "connector-status connector-ok";
-      el.connectorStatus.lastElementChild.textContent = "Conector IUCN instalado y disponible";
+      el.connectorCard.className = "connector-card connector-card-ok";
+      el.connectorTitle.textContent = "Conector IUCN listo";
+      el.connectorSubtitle.textContent = "Instalado y disponible para consultar IUCN API v4.";
+      el.connectorOnboarding.classList.add("hidden");
+    } else if (isLocalPythonMode()) {
+      el.connectorCard.className = "connector-card connector-card-ok";
+      el.connectorTitle.textContent = "Motor local disponible";
+      el.connectorSubtitle.textContent = "La extensión no fue detectada, pero el respaldo Python local está activo.";
+      el.connectorOnboarding.classList.add("hidden");
     } else {
-      el.connectorStatus.className = "connector-status connector-missing";
-      el.connectorStatus.lastElementChild.textContent = isLocalPythonMode() ? "Extensión no detectada · respaldo Python local disponible" : "Conector no detectado · instala la extensión para consultar IUCN";
+      el.connectorCard.className = "connector-card connector-card-missing";
+      el.connectorTitle.textContent = "Instala el conector IUCN una sola vez";
+      el.connectorSubtitle.textContent = "Es el puente local que permite consultar IUCN sin enviar tus archivos a un servidor nuestro.";
+      el.connectorOnboarding.classList.remove("hidden");
     }
     return ok;
   }
@@ -293,6 +307,15 @@
   el.dropzone.addEventListener("drop",e=>handleFile(e.dataTransfer.files[0]));
 
   resetApp();
+  if (el.connectorHelpBtn && el.connectorInstallSteps) {
+    el.connectorHelpBtn.addEventListener("click", () => {
+      const opening = el.connectorInstallSteps.classList.contains("hidden");
+      el.connectorInstallSteps.classList.toggle("hidden", !opening);
+      el.connectorHelpBtn.setAttribute("aria-expanded", String(opening));
+      el.connectorHelpBtn.textContent = opening ? "Ocultar instrucciones" : "Cómo instalarlo";
+    });
+  }
+
   refreshConnectorStatus();
   window.addEventListener("focus", () => refreshConnectorStatus());
 })();
