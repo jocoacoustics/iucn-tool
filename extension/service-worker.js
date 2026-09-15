@@ -2,6 +2,7 @@
 
 const API_ORIGIN = "https://api.iucnredlist.org";
 const API_PREFIX = "/api/v4/";
+const TOKEN_STORAGE_KEY = "iucnToken";
 const ALLOWED_WEB_ORIGINS = new Set([
   "https://jocoacoustics.github.io",
   "http://127.0.0.1",
@@ -28,8 +29,25 @@ function buildIucnUrl(pathAndQuery) {
   return u.toString();
 }
 
+async function getSavedToken() {
+  const data = await chrome.storage.local.get(TOKEN_STORAGE_KEY);
+  const token = typeof data[TOKEN_STORAGE_KEY] === "string" ? data[TOKEN_STORAGE_KEY].trim() : "";
+  return token;
+}
+
+async function saveToken(token) {
+  const clean = typeof token === "string" ? token.trim() : "";
+  if (!clean) throw new Error("Token IUCN vacío");
+  await chrome.storage.local.set({ [TOKEN_STORAGE_KEY]: clean });
+}
+
+async function clearToken() {
+  await chrome.storage.local.remove(TOKEN_STORAGE_KEY);
+}
+
 async function iucnRequest(message) {
-  const token = typeof message.token === "string" ? message.token.trim() : "";
+  let token = typeof message.token === "string" ? message.token.trim() : "";
+  if (!token) token = await getSavedToken();
   if (!token) return { ok: false, status: 0, error: "Token IUCN vacío" };
 
   const url = buildIucnUrl(message.path);
@@ -38,8 +56,6 @@ async function iucnRequest(message) {
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    // Replica el mecanismo que ya funciona en APIv4_20260113151100.py:
-    // Authorization: <token> (sin Bearer por defecto).
     const response = await fetch(url, {
       method: "GET",
       headers: {
@@ -92,6 +108,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "IUCN_CONNECTOR_PING") {
     sendResponse({ ok: true, connector: "Jocotoco IUCN Connector", version: chrome.runtime.getManifest().version });
     return false;
+  }
+
+  if (message.type === "IUCN_TOKEN_GET") {
+    getSavedToken()
+      .then(token => sendResponse({ ok: true, token }))
+      .catch(err => sendResponse({ ok: false, status: 0, error: err.message || String(err) }));
+    return true;
+  }
+
+  if (message.type === "IUCN_TOKEN_SET") {
+    saveToken(message.token)
+      .then(() => sendResponse({ ok: true, saved: true }))
+      .catch(err => sendResponse({ ok: false, status: 0, error: err.message || String(err) }));
+    return true;
+  }
+
+  if (message.type === "IUCN_TOKEN_CLEAR") {
+    clearToken()
+      .then(() => sendResponse({ ok: true, cleared: true }))
+      .catch(err => sendResponse({ ok: false, status: 0, error: err.message || String(err) }));
+    return true;
   }
 
   if (message.type !== "IUCN_REQUEST") {

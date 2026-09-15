@@ -1,51 +1,29 @@
-# Instalación de Jocotoco IUCN Connector
+# Instalar Jocotoco IUCN Connector
 
-La extensión es un adaptador de red mínimo. No contiene la interfaz del programa, no guarda archivos, no usa base de datos y no persiste el token.
+IUCN Tool bloquea la carga de archivos y la entrada manual hasta detectar esta extensión. Solo debes instalarla una vez por perfil de navegador.
 
-## Chrome — prueba / distribución interna
+## Chrome
 
-1. Descomprime el ZIP del proyecto en una carpeta permanente. No borres ni muevas la carpeta `extension` después de instalarla.
-2. Abre una pestaña nueva y escribe:
+1. Descarga `Jocotoco-IUCN-Connector.zip` desde IUCN Tool.
+2. Descomprime el ZIP en una carpeta permanente.
+3. Abre `chrome://extensions`.
+4. Activa **Modo de desarrollador**.
+5. Pulsa **Cargar descomprimida**.
+6. Selecciona la carpeta que contiene `manifest.json`.
+7. Regresa a IUCN Tool y recarga la página.
 
-   `chrome://extensions`
+## Edge
 
-3. Activa **Modo de desarrollador**.
-4. Pulsa **Cargar descomprimida** / **Load unpacked**.
-5. Selecciona **la carpeta `extension`** del proyecto. Debes seleccionar la carpeta que contiene `manifest.json`, no el ZIP completo.
-6. Debe aparecer **Jocotoco IUCN Connector**.
-7. Abre o recarga IUCN Tool en GitHub Pages. En la pantalla inicial debe aparecer:
+Sigue los mismos pasos usando:
 
-   `Conector IUCN instalado y disponible`
+```text
+edge://extensions
+```
 
-8. Haz primero una prueba manual con `Panthera leo` y tu token.
+IUCN Tool detecta automáticamente Chrome o Edge para mostrar la ruta correspondiente.
 
-## Microsoft Edge
+## Token
 
-El flujo es equivalente:
+La extensión puede recordar opcionalmente el token IUCN usando exclusivamente `chrome.storage.local`. No usa sincronización, cookies ni almacenamiento de servidor. El token guardado puede borrarse desde IUCN Tool con **Olvidar**.
 
-1. `edge://extensions`
-2. Activa **Modo de desarrollador**.
-3. **Cargar desempaquetada** / **Load unpacked**.
-4. Selecciona la carpeta `extension`.
-5. Recarga IUCN Tool.
-
-## Qué permisos solicita
-
-La extensión está limitada por `manifest.json` a:
-
-- ejecutarse únicamente en `https://jocoacoustics.github.io/*` y, para desarrollo, `localhost` / `127.0.0.1`;
-- hacer solicitudes únicamente a `https://api.iucnredlist.org/*`.
-
-El motor de la extensión rechaza además cualquier ruta que no empiece por `/api/v4/`.
-
-## Para distribución definitiva
-
-El modo **Cargar descomprimida** es ideal para pruebas e instalación interna. Para una experiencia de un clic y actualizaciones automáticas, el siguiente paso es publicar la misma extensión en Chrome Web Store como extensión no listada o según la política de la organización. La aplicación de GitHub Pages no cambia.
-
-## Si la página dice “Conector no detectado”
-
-- confirma que la extensión está habilitada en `chrome://extensions`;
-- recarga la página de IUCN Tool;
-- abre el menú de la extensión y confirma que aparece “Conector instalado”;
-- revisa que estás usando `jocoacoustics.github.io` o `localhost`;
-- si Chrome restringió el acceso del sitio para la extensión, vuelve a permitirlo y recarga.
+> No borres ni muevas la carpeta descomprimida después de instalar una extensión mediante **Cargar descomprimida**.

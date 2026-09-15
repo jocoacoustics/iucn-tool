@@ -45,6 +45,26 @@
     }
   }
 
+  async function getToken(timeoutMs = 1800) {
+    const r = await send({ type: "IUCN_TOKEN_GET" }, timeoutMs);
+    if (!r || !r.ok) throw new Error((r && r.error) || "No se pudo leer el token local.");
+    return typeof r.token === "string" ? r.token : "";
+  }
+
+  async function saveToken(token, timeoutMs = 1800) {
+    const clean = String(token || "").trim();
+    if (!clean) throw new Error("Token IUCN vacío");
+    const r = await send({ type: "IUCN_TOKEN_SET", token: clean }, timeoutMs);
+    if (!r || !r.ok) throw new Error((r && r.error) || "No se pudo guardar el token localmente.");
+    return true;
+  }
+
+  async function clearToken(timeoutMs = 1800) {
+    const r = await send({ type: "IUCN_TOKEN_CLEAR" }, timeoutMs);
+    if (!r || !r.ok) throw new Error((r && r.error) || "No se pudo olvidar el token local.");
+    return true;
+  }
+
   async function request(url, token, options = {}) {
     const u = new URL(url);
     if (u.origin !== API_ORIGIN || !u.pathname.startsWith("/api/v4/")) {
@@ -67,5 +87,5 @@
     return r;
   }
 
-  global.IUCNExtensionBridge = Object.freeze({ ping, request });
+  global.IUCNExtensionBridge = Object.freeze({ ping, getToken, saveToken, clearToken, request });
 })(globalThis);

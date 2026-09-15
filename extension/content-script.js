@@ -2,12 +2,19 @@
 
 const PAGE_CHANNEL = "JOCOTOCO_IUCN_PAGE";
 const EXT_CHANNEL = "JOCOTOCO_IUCN_CONNECTOR";
+const ALLOWED_TYPES = new Set([
+  "IUCN_CONNECTOR_PING",
+  "IUCN_REQUEST",
+  "IUCN_TOKEN_GET",
+  "IUCN_TOKEN_SET",
+  "IUCN_TOKEN_CLEAR"
+]);
 
 window.addEventListener("message", event => {
   if (event.source !== window) return;
   const msg = event.data;
   if (!msg || msg.channel !== PAGE_CHANNEL || typeof msg.requestId !== "string") return;
-  if (!["IUCN_CONNECTOR_PING", "IUCN_REQUEST"].includes(msg.type)) return;
+  if (!ALLOWED_TYPES.has(msg.type)) return;
 
   chrome.runtime.sendMessage({
     type: msg.type,
@@ -25,5 +32,4 @@ window.addEventListener("message", event => {
   });
 });
 
-// Aviso pasivo de disponibilidad, útil si la página cargó después del content script.
 window.postMessage({ channel: EXT_CHANNEL, type: "IUCN_CONNECTOR_READY" }, window.location.origin);

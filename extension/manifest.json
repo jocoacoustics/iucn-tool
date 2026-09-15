@@ -1,8 +1,11 @@
 {
   "manifest_version": 3,
   "name": "Jocotoco IUCN Connector",
-  "version": "1.0.0",
-  "description": "Conector local mínimo entre IUCN Tool y la API v4 de IUCN. No almacena archivos ni tokens.",
+  "version": "1.1.0",
+  "description": "Conector local mínimo entre IUCN Tool y la API v4 de IUCN. Puede recordar opcionalmente el token solo en el almacenamiento local de esta extensión.",
+  "permissions": [
+    "storage"
+  ],
   "host_permissions": [
     "https://api.iucnredlist.org/*"
   ],

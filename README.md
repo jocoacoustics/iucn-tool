@@ -1,10 +1,8 @@
 # IUCN Tool — GitHub Pages + conector local
 
-https://jocoacoustics.github.io/iucn-tool/
+Interfaz web para consultar **IUCN Red List API v4** desde Excel, CSV o una lista manual, sin mantener un servidor central.
 
-Interfaz para consultar **IUCN Red List API v4** desde Excel, CSV o una lista manual sin mantener un servidor central.
-
-## Cómo funciona
+## Arquitectura
 
 ```text
 GitHub Pages
@@ -20,38 +18,46 @@ Extensión Chrome/Edge · Manifest V3
 IUCN Red List API v4
 ```
 
-Los Excel/CSV se leen y procesan en el navegador. La página normaliza nombres, calcula los nombres únicos, reconstruye las filas repetidas, muestra el progreso y genera el XLSX final. La extensión tiene una responsabilidad mínima: realizar la petición autenticada a IUCN que una página web normal no puede realizar de forma fiable por CORS.
+Los Excel/CSV se leen y procesan en el navegador. La página normaliza nombres, consulta una sola vez cada nombre científico único, reconstruye las filas repetidas, muestra progreso y genera el XLSX final. La extensión tiene una responsabilidad mínima: realizar el `fetch` autenticado a IUCN que una página web normal no puede realizar de forma fiable por CORS.
 
 No hay Cloud Run, Cloudflare Worker, servidor Jocotoco ni base de datos.
 
-## Inicio rápido para usuarios
+## Experiencia del usuario
 
-### 1. Instalar el conector — solo la primera vez
+IUCN Tool **no permite cargar archivos ni usar la entrada manual hasta detectar el conector**.
 
-La propia página de IUCN Tool muestra un botón **Descargar conector (.zip)** cuando no detecta la extensión. El archivo también está incluido en este repositorio en:
+Cuando la extensión no está instalada o está desactivada, la aplicación queda difuminada y bloqueada detrás de una ventana de instalación. Esa ventana desaparece únicamente cuando IUCN Tool detecta correctamente la extensión.
 
-```text
-downloads/Jocotoco-IUCN-Connector.zip
-```
+La ventana incluye:
 
-#### Chrome
+- descarga directa de `Jocotoco-IUCN-Connector.zip`;
+- instrucciones completas;
+- un solo botón **Abrir extensiones**;
+- detección automática de Chrome o Edge para mostrar el icono y la ruta correctos;
+- botón **Ya lo instalé · Recargar y comprobar**.
 
-1. Descarga **Jocotoco-IUCN-Connector.zip** desde IUCN Tool.
+> Los navegadores pueden impedir que una página HTTPS abra directamente una URL interna como `chrome://extensions`. Por eso el botón también copia la ruta correspondiente como respaldo.
+
+## Instalación del conector — una sola vez
+
+### Chrome
+
+1. En IUCN Tool pulsa **Descargar conector (.zip)**.
 2. Descomprime el ZIP en una **carpeta permanente**, por ejemplo:
 
    ```text
    Documentos/Jocotoco-IUCN-Connector/
    ```
 
-3. En Chrome abre:
+3. Pulsa **Abrir extensiones**. Si Chrome no permite abrir automáticamente su página interna, pega en la barra de direcciones la ruta que quedó copiada:
 
    ```text
    chrome://extensions
    ```
 
-4. Activa **Modo de desarrollador** en la esquina superior derecha.
+4. Activa **Modo de desarrollador**.
 5. Pulsa **Cargar descomprimida**.
-6. Selecciona la carpeta descomprimida que contiene directamente:
+6. Selecciona la carpeta que contiene directamente:
 
    ```text
    manifest.json
@@ -60,50 +66,59 @@ downloads/Jocotoco-IUCN-Connector.zip
    popup.html
    ```
 
-7. Vuelve a IUCN Tool y recarga la página.
-8. Debe aparecer el estado verde **Conector IUCN listo**.
+7. Vuelve a IUCN Tool y pulsa **Ya lo instalé · Recargar y comprobar**.
+8. Si el conector responde correctamente, la ventana desaparece y la aplicación queda habilitada.
 
-> **Importante:** no borres ni muevas la carpeta descomprimida después de instalarla. Una extensión cargada como *unpacked* se ejecuta desde esa carpeta.
+> **Importante:** no borres ni muevas la carpeta descomprimida mientras uses una extensión cargada como *unpacked*.
 
-#### Microsoft Edge
+### Microsoft Edge
 
-El procedimiento es el mismo, pero abre:
+El proceso es idéntico. IUCN Tool detecta Edge y usa:
 
 ```text
 edge://extensions
 ```
 
-y utiliza **Cargar desempaquetado / Load unpacked**.
+En Edge la opción suele aparecer como **Cargar desempaquetado / Load unpacked**.
 
-### 2. Usar IUCN Tool
+## Uso
+
+Una vez instalado el conector:
 
 1. Abre IUCN Tool.
-2. Comprueba que aparezca **Conector IUCN listo**.
-3. Carga un Excel/CSV o usa **Ingresar manualmente**.
-4. Introduce tu token IUCN.
-5. Pulsa **Consultar**.
-6. Descarga el XLSX resultante.
+2. La ventana de instalación debe desaparecer automáticamente.
+3. Carga un Excel/CSV o pulsa **Ingresar manualmente**.
+4. Introduce el token IUCN.
+5. Opcionalmente marca **Recordar token en este navegador**.
+6. Pulsa **Consultar**.
+7. Descarga el XLSX resultante.
 
-Se consulta una sola vez cada nombre científico normalizado único. Las filas repetidas reutilizan el resultado.
+## Recordar el token
 
-## Qué verá el usuario
+El token **solo puede persistirse de forma local y opcional**.
 
-El bloque del conector es adaptativo:
+Si el usuario marca **Recordar token en este navegador**:
 
-- **Conector instalado:** solo muestra un estado verde compacto y no ocupa espacio adicional.
-- **Conector ausente:** muestra la descarga y las instrucciones de instalación.
-- **Desarrollo local con Python:** indica que el motor local de respaldo está disponible.
+- se guarda en `chrome.storage.local` de **Jocotoco IUCN Connector**;
+- permanece únicamente en ese perfil local del navegador;
+- no utiliza `chrome.storage.sync`;
+- no utiliza `localStorage`, `sessionStorage`, IndexedDB ni cookies de la página;
+- no se envía a servidores de Jocotoco;
+- se recupera automáticamente al volver a abrir IUCN Tool;
+- puede eliminarse con **Olvidar**.
 
-La instalación del conector se realiza una sola vez. Las futuras mejoras de la interfaz se publican en GitHub Pages y aparecen automáticamente al recargar, sin reinstalar la extensión mientras el protocolo del conector no cambie.
+El token sí se transmite por HTTPS a IUCN cuando se realiza una consulta, porque es la credencial requerida por IUCN API v4.
 
 ## Privacidad
 
-- El archivo Excel/CSV no se sube a un servidor Jocotoco.
-- El token se mantiene en memoria durante la sesión y la extensión no lo almacena.
-- No se usa `localStorage`, `sessionStorage`, IndexedDB ni cookies para persistir token o datos.
-- La extensión solo tiene permiso para `api.iucnredlist.org`.
-- La extensión solo se inyecta en `jocoacoustics.github.io` y en `localhost` para desarrollo.
-- El service worker rechaza destinos que no sean IUCN API v4.
+- El Excel/CSV permanece en el navegador del usuario.
+- La aplicación no tiene backend propio.
+- Los resultados se construyen localmente.
+- El token solo se usa para IUCN.
+- La persistencia del token es opcional y exclusivamente local en la extensión.
+- La extensión solo tiene permiso de host para `api.iucnredlist.org`.
+- El service worker rechaza rutas que no pertenezcan a `/api/v4/`.
+- El content script solo se inyecta en `jocoacoustics.github.io`, `localhost` y `127.0.0.1`.
 
 ## Publicar en GitHub Pages
 
@@ -119,31 +134,34 @@ Por ejemplo:
 https://jocoacoustics.github.io/iucn-tool/
 ```
 
-El botón de descarga utiliza una ruta relativa:
+El ZIP del conector está dentro del propio proyecto:
 
 ```text
 downloads/Jocotoco-IUCN-Connector.zip
 ```
 
-por lo que sigue funcionando aunque cambie el nombre del repositorio dentro de `jocoacoustics.github.io`.
+y la UX usa una ruta relativa, por lo que funciona independientemente del nombre del repositorio bajo `jocoacoustics.github.io`.
 
-Si en el futuro se publica bajo otro dominio, hay que agregar ese dominio a `extension/manifest.json` y a la lista `ALLOWED_WEB_ORIGINS` de `extension/service-worker.js`.
+Si se publica bajo otro dominio, hay que agregarlo a:
+
+- `extension/manifest.json` → `content_scripts.matches`;
+- `extension/service-worker.js` → `ALLOWED_WEB_ORIGINS`.
 
 ## Desarrollo local
 
-Se mantiene el motor Python validado como respaldo para desarrollo:
+Puedes servir el proyecto con el servidor Python incluido:
 
 ```bat
 python local_server.py
 ```
 
-Abre:
+Luego abre:
 
 ```text
 http://127.0.0.1:8000
 ```
 
-Si la extensión está instalada, la web le da prioridad al conector. Si no está instalada y estás en localhost, utiliza el motor Python local.
+La UX de esta versión **sigue exigiendo que la extensión esté instalada** antes de habilitar carga de archivos o entrada manual. El servidor Python se conserva únicamente como herramienta de desarrollo y validación.
 
 ## Estructura
 
@@ -152,6 +170,9 @@ iucn-tool-github-extension/
 ├── index.html
 ├── assets/
 │   ├── css/styles.css
+│   ├── icons/
+│   │   ├── chrome.svg
+│   │   └── edge.svg
 │   └── js/
 │       ├── extension-bridge.js
 │       ├── iucn-core.js
@@ -159,7 +180,7 @@ iucn-tool-github-extension/
 │       ├── table.js
 │       └── config.js
 ├── downloads/
-│   └── Jocotoco-IUCN-Connector.zip   ← descarga desde la propia UX
+│   └── Jocotoco-IUCN-Connector.zip
 ├── extension/
 │   ├── manifest.json
 │   ├── content-script.js
@@ -176,21 +197,12 @@ iucn-tool-github-extension/
 └── THIRD_PARTY_NOTICES.md
 ```
 
-## Seguridad del conector
-
-El conector aplica dos límites además de los permisos de Chrome:
-
-1. acepta mensajes únicamente cuando la pestaña pertenece a `jocoacoustics.github.io`, `localhost` o `127.0.0.1`;
-2. construye las solicitudes exclusivamente sobre `https://api.iucnredlist.org/api/v4/`.
-
-La autenticación replica el comportamiento del motor Python validado: `Authorization: <token>`.
-
 ## Actualizar la extensión
 
-La mayoría de cambios de IUCN Tool ocurren en GitHub Pages y no requieren tocar la extensión. Si alguna vez cambia el conector:
+La mayoría de mejoras de IUCN Tool ocurren en GitHub Pages y no requieren reinstalar el conector. Si cambia la extensión:
 
 1. descarga el ZIP nuevo;
-2. reemplaza el contenido de la carpeta permanente del conector;
-3. abre `chrome://extensions`;
+2. reemplaza el contenido de la carpeta permanente;
+3. abre `chrome://extensions` o `edge://extensions`;
 4. pulsa **Recargar** en *Jocotoco IUCN Connector*;
 5. recarga IUCN Tool.

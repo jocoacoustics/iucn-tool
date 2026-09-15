@@ -3,10 +3,18 @@ const path = require('path');
 
 let listener = null;
 let seenFetch = null;
+const storage = {};
 global.chrome = {
   runtime: {
     onMessage: { addListener(fn) { listener = fn; } },
-    getManifest() { return { version: '1.0.0' }; }
+    getManifest() { return { version: '1.1.0' }; }
+  },
+  storage: {
+    local: {
+      async get(key) { return {[key]: storage[key]}; },
+      async set(obj) { Object.assign(storage, obj); },
+      async remove(key) { delete storage[key]; }
+    }
   }
 };
 global.fetch = async (url, options) => {
@@ -23,35 +31,42 @@ assert(listener, 'service worker listener no registrado');
 
 function send(message, sender={url:'https://jocoacoustics.github.io/iucn-tool/'}) {
   return new Promise((resolve, reject) => {
-    const ret = listener(message, sender, resolve);
-    if (ret !== true) setTimeout(() => resolve.__unused, 0);
+    listener(message, sender, resolve);
     setTimeout(() => reject(new Error('timeout')), 1500);
   });
 }
 
 (async () => {
-  const ping = await new Promise(resolve => listener({type:'IUCN_CONNECTOR_PING'}, {url:'https://jocoacoustics.github.io/x/'}, resolve));
+  const ping = await send({type:'IUCN_CONNECTOR_PING'});
   assert.equal(ping.ok, true);
+
+  const saved = await send({type:'IUCN_TOKEN_SET', token:'abc123'});
+  assert.equal(saved.ok, true);
+  assert.equal(storage.iucnToken, 'abc123');
+
+  const read = await send({type:'IUCN_TOKEN_GET'});
+  assert.equal(read.ok, true);
+  assert.equal(read.token, 'abc123');
 
   const result = await send({
     type:'IUCN_REQUEST',
     path:'/api/v4/taxa/scientific_name?genus_name=Panthera&species_name=leo',
-    token:'abc123', timeoutMs:5000
+    token:'', timeoutMs:5000
   });
   assert.equal(result.status, 200);
   assert.equal(seenFetch.options.headers.Authorization, 'abc123');
   assert(seenFetch.url.startsWith('https://api.iucnredlist.org/api/v4/taxa/scientific_name'));
 
-  const denied = await new Promise(resolve => listener(
-    {type:'IUCN_CONNECTOR_PING'},
-    {url:'https://evil.example/'},
-    resolve
-  ));
+  const cleared = await send({type:'IUCN_TOKEN_CLEAR'});
+  assert.equal(cleared.ok, true);
+  assert.equal(storage.iucnToken, undefined);
+
+  const denied = await send({type:'IUCN_CONNECTOR_PING'}, {url:'https://evil.example/'});
   assert.equal(denied.ok, false);
 
   const invalid = await send({type:'IUCN_REQUEST', path:'https://example.com/x', token:'abc123'});
   assert.equal(invalid.ok, false);
   assert.match(invalid.error, /Ruta IUCN no permitida|Destino no permitido/);
 
-  console.log('OK extension_worker: origen, allowlist IUCN y Authorization raw');
+  console.log('OK extension_worker: origen, allowlist IUCN, Authorization raw y token local opcional');
 })().catch(err => { console.error(err); process.exit(1); });

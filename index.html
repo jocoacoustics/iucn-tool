@@ -6,9 +6,9 @@
   <meta name="description" content="Consulta taxonomía y evaluaciones de la Lista Roja de la UICN desde Excel, CSV o entrada manual. El procesamiento ocurre en el navegador." />
   <meta name="referrer" content="no-referrer" />
   <title>IUCN Tool · Taxonomía y Lista Roja</title>
-  <link rel="stylesheet" href="assets/css/styles.css?v=20260914a" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260914b" />
 </head>
-<body>
+<body class="connector-locked">
   <main class="app-shell" id="appShell">
     <header class="brand" aria-labelledby="appTitle">
       <h1 id="appTitle">IUCN Tool</h1>
@@ -37,38 +37,9 @@
 
       <p class="privacy-note">
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-        Tus archivos se procesan localmente. El token permanece solo en memoria durante la consulta y no se almacena.
+        Tus archivos se procesan localmente. El token solo se envía a IUCN y, si eliges recordarlo, se guarda únicamente en la extensión local de este navegador.
       </p>
 
-      <section class="connector-card connector-card-checking" id="connectorCard" aria-live="polite" aria-label="Estado del conector IUCN">
-        <div class="connector-card-head">
-          <span class="connector-dot" aria-hidden="true"></span>
-          <div class="connector-copy">
-            <strong id="connectorTitle">Detectando Jocotoco IUCN Connector…</strong>
-            <span id="connectorSubtitle">Comprobando el conector local.</span>
-          </div>
-        </div>
-        <div class="connector-onboarding hidden" id="connectorOnboarding">
-          <p>Se instala una sola vez. Después solo tendrás que entrar a esta página y consultar.</p>
-          <div class="connector-actions">
-            <a class="btn btn-primary connector-download" id="connectorDownload" href="downloads/Jocotoco-IUCN-Connector.zip" download>
-              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 21h14"/></svg>
-              Descargar conector (.zip)
-            </a>
-            <button class="btn btn-secondary connector-help" id="connectorHelpBtn" type="button" aria-expanded="false" aria-controls="connectorInstallSteps">Cómo instalarlo</button>
-          </div>
-          <div class="connector-install-steps hidden" id="connectorInstallSteps">
-            <ol>
-              <li>Descomprime el ZIP en una carpeta permanente.</li>
-              <li>Abre <code>chrome://extensions</code> (o <code>edge://extensions</code>).</li>
-              <li>Activa <strong>Modo de desarrollador</strong>.</li>
-              <li>Pulsa <strong>Cargar descomprimida</strong> y selecciona la carpeta que contiene <code>manifest.json</code>.</li>
-              <li>Recarga IUCN Tool. El estado de este bloque debe ponerse en verde.</li>
-            </ol>
-            <p class="connector-folder-note"><strong>Importante:</strong> no borres ni muevas la carpeta descomprimida mientras uses la extensión.</p>
-          </div>
-        </div>
-      </section>
     </section>
 
     <section class="panel workspace-panel hidden" id="workspaceView" aria-label="Consulta IUCN">
@@ -97,13 +68,18 @@
           <span>Columna a consultar</span>
           <select id="columnSelect"></select>
         </label>
-        <label class="field field-token">
+        <div class="field field-token">
           <span>Token IUCN</span>
           <div class="input-with-action">
             <input id="tokenInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Pega tu token" />
             <button class="eye-btn" id="toggleTokenBtn" type="button" aria-label="Mostrar u ocultar token">◉</button>
           </div>
-        </label>
+          <div class="token-persistence">
+            <label class="remember-token"><input id="rememberTokenCheckbox" type="checkbox" /> <span>Recordar token en este navegador</span></label>
+            <button class="token-forget hidden" id="forgetTokenBtn" type="button">Olvidar</button>
+          </div>
+          <small class="token-storage-status" id="tokenStorageStatus"></small>
+        </div>
         <button class="btn btn-primary consult-btn" id="consultBtn" type="button">Consultar</button>
       </div>
 
@@ -114,20 +90,25 @@
           <small>Una especie por línea. También puedes pegar una columna copiada desde Excel.</small>
         </label>
         <div class="manual-actions-row">
-          <label class="field field-token">
+          <div class="field field-token">
             <span>Token IUCN</span>
             <div class="input-with-action">
               <input id="manualTokenInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Pega tu token" />
               <button class="eye-btn" id="toggleManualTokenBtn" type="button" aria-label="Mostrar u ocultar token">◉</button>
             </div>
-          </label>
+            <div class="token-persistence">
+              <label class="remember-token"><input id="manualRememberTokenCheckbox" type="checkbox" /> <span>Recordar token en este navegador</span></label>
+              <button class="token-forget hidden" id="manualForgetTokenBtn" type="button">Olvidar</button>
+            </div>
+            <small class="token-storage-status" id="manualTokenStorageStatus"></small>
+          </div>
           <button class="btn btn-primary consult-btn" id="manualConsultBtn" type="button">Consultar</button>
         </div>
       </div>
 
       <p class="privacy-note privacy-note-workspace">
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-        Tus archivos se procesan localmente. El token permanece solo en memoria durante la consulta y no se almacena.
+        Tus archivos se procesan localmente. El token solo se envía a IUCN y, si eliges recordarlo, se guarda únicamente en la extensión local de este navegador.
       </p>
 
       <section class="progress-block hidden" id="progressBlock" aria-live="polite">
@@ -190,12 +171,48 @@
     <div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
   </main>
 
+  <div class="connector-gate" id="connectorGate" role="presentation">
+    <div class="connector-gate-backdrop" aria-hidden="true"></div>
+    <section class="connector-modal" role="dialog" aria-modal="true" aria-labelledby="connectorModalTitle" aria-describedby="connectorModalDesc">
+      <div class="connector-modal-title-row">
+        <span class="connector-warning" aria-hidden="true">!</span>
+        <div>
+          <h2 id="connectorModalTitle">Instala el conector IUCN para continuar</h2>
+          <p id="connectorModalDesc">El conector es necesario para consultar IUCN API v4 desde tu navegador. Solo debes instalarlo una vez.</p>
+        </div>
+      </div>
+
+      <ol class="connector-modal-steps">
+        <li><span>Descarga el conector (.zip).</span></li>
+        <li><span>Descomprime el ZIP en una carpeta permanente.</span></li>
+        <li><span>Abre la página de extensiones de tu navegador.</span></li>
+        <li><span>Activa <strong>Modo de desarrollador</strong>.</span></li>
+        <li><span>Haz clic en <strong>Cargar descomprimida</strong> y selecciona la carpeta que contiene <code>manifest.json</code>.</span></li>
+        <li><span>Vuelve a IUCN Tool y recarga la página.</span></li>
+      </ol>
+
+      <a class="btn btn-primary connector-modal-download" href="downloads/Jocotoco-IUCN-Connector.zip" download>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 21h14"/></svg>
+        Descargar conector (.zip)
+      </a>
+
+      <button class="connector-browser-button" id="openExtensionsBtn" type="button">
+        <img id="browserIcon" src="assets/icons/chrome.svg" alt="" aria-hidden="true" />
+        <span><strong>Abrir extensiones</strong><small id="browserRoute">chrome://extensions</small></span>
+      </button>
+      <p class="connector-open-note" id="connectorOpenNote">Si el navegador no permite abrir su página interna automáticamente, la ruta se copiará para que la pegues en la barra de direcciones.</p>
+
+      <button class="connector-retry" id="connectorRetryBtn" type="button">Ya lo instalé · Recargar y comprobar</button>
+      <p class="connector-modal-foot">Cuando el conector esté disponible, esta ventana desaparecerá automáticamente y se habilitará IUCN Tool.</p>
+    </section>
+  </div>
+
   <!-- SheetJS Community Edition. Solo descarga código del lector/escritor de hojas; los datos permanecen en el navegador. -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" referrerpolicy="no-referrer"></script>
   <script src="assets/js/config.js?v=20260911x"></script>
-  <script src="assets/js/extension-bridge.js?v=20260914a"></script>
-  <script src="assets/js/iucn-core.js?v=20260914a"></script>
-  <script src="assets/js/table.js?v=20260914a"></script>
-  <script src="assets/js/app.js?v=20260914a"></script>
+  <script src="assets/js/extension-bridge.js?v=20260914b"></script>
+  <script src="assets/js/iucn-core.js?v=20260914b"></script>
+  <script src="assets/js/table.js?v=20260914b"></script>
+  <script src="assets/js/app.js?v=20260914b"></script>
 </body>
 </html>

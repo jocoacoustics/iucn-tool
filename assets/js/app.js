@@ -12,13 +12,17 @@
     resultsDivider: $("resultsDivider"), resultsSection: $("resultsSection"), resultsMeta: $("resultsMeta"), tableSearch: $("tableSearch"),
     pageSizeSelect: $("pageSizeSelect"), resultsHead: $("resultsHead"), resultsBody: $("resultsBody"), paginationMeta: $("paginationMeta"),
     pagination: $("pagination"), downloadBtn: $("downloadBtn"), toast: $("toast"),
-    connectorCard: $("connectorCard"), connectorTitle: $("connectorTitle"), connectorSubtitle: $("connectorSubtitle"),
-    connectorOnboarding: $("connectorOnboarding"), connectorHelpBtn: $("connectorHelpBtn"), connectorInstallSteps: $("connectorInstallSteps")
+    connectorGate: $("connectorGate"), openExtensionsBtn: $("openExtensionsBtn"), browserIcon: $("browserIcon"), browserRoute: $("browserRoute"),
+    connectorOpenNote: $("connectorOpenNote"), connectorRetryBtn: $("connectorRetryBtn"),
+    rememberTokenCheckbox: $("rememberTokenCheckbox"), manualRememberTokenCheckbox: $("manualRememberTokenCheckbox"),
+    forgetTokenBtn: $("forgetTokenBtn"), manualForgetTokenBtn: $("manualForgetTokenBtn"),
+    tokenStorageStatus: $("tokenStorageStatus"), manualTokenStorageStatus: $("manualTokenStorageStatus")
   };
 
   const state = {
     mode: null, file: null, fileType: null, workbook: null, rows: [], headers: [], results: [], sourceBaseName: "resultado",
-    progressStartMs: 0, progressDone: 0, progressTotal: 0, progressTitleText: "Consultando IUCN", progressTimer: null
+    progressStartMs: 0, progressDone: 0, progressTotal: 0, progressTitleText: "Consultando IUCN", progressTimer: null,
+    connectorReady: false, tokenSaved: false, savedToken: ""
   };
 
   const table = IUCNTable.createTableController({
@@ -78,30 +82,85 @@
   }
   function setBusy(busy) { el.consultBtn.disabled=busy; el.manualConsultBtn.disabled=busy; el.resetBtn.disabled=busy; el.downloadBtn.disabled=busy || !state.results.length; }
 
-  async function refreshConnectorStatus() {
-    if (!el.connectorCard) return false;
-    el.connectorCard.className = "connector-card connector-card-checking";
-    el.connectorTitle.textContent = "Detectando Jocotoco IUCN Connector…";
-    el.connectorSubtitle.textContent = "Comprobando el conector local.";
-    el.connectorOnboarding.classList.add("hidden");
+  function detectedBrowser() {
+    const ua = String(navigator.userAgent || "");
+    return /Edg\//.test(ua) ? { name: "Edge", route: "edge://extensions", icon: "assets/icons/edge.svg" } : { name: "Chrome", route: "chrome://extensions", icon: "assets/icons/chrome.svg" };
+  }
 
-    const ok = !!(globalThis.IUCNExtensionBridge && await globalThis.IUCNExtensionBridge.ping(1200));
-    if (ok) {
-      el.connectorCard.className = "connector-card connector-card-ok";
-      el.connectorTitle.textContent = "Conector IUCN listo";
-      el.connectorSubtitle.textContent = "Instalado y disponible para consultar IUCN API v4.";
-      el.connectorOnboarding.classList.add("hidden");
-    } else if (isLocalPythonMode()) {
-      el.connectorCard.className = "connector-card connector-card-ok";
-      el.connectorTitle.textContent = "Motor local disponible";
-      el.connectorSubtitle.textContent = "La extensión no fue detectada, pero el respaldo Python local está activo.";
-      el.connectorOnboarding.classList.add("hidden");
-    } else {
-      el.connectorCard.className = "connector-card connector-card-missing";
-      el.connectorTitle.textContent = "Instala el conector IUCN una sola vez";
-      el.connectorSubtitle.textContent = "Es el puente local que permite consultar IUCN sin enviar tus archivos a un servidor nuestro.";
-      el.connectorOnboarding.classList.remove("hidden");
+  function configureBrowserButton() {
+    const browser = detectedBrowser();
+    if (el.browserRoute) el.browserRoute.textContent = browser.route;
+    if (el.browserIcon) el.browserIcon.src = browser.icon;
+    if (el.openExtensionsBtn) el.openExtensionsBtn.setAttribute("aria-label", `Abrir extensiones en ${browser.name}`);
+    return browser;
+  }
+
+  function setGateLocked(locked) {
+    document.body.classList.toggle("connector-locked", locked);
+    if (el.connectorGate) el.connectorGate.classList.toggle("hidden", !locked);
+  }
+
+  function renderTokenStorage() {
+    const saved = !!state.tokenSaved;
+    [el.rememberTokenCheckbox, el.manualRememberTokenCheckbox].forEach(x => { if (x) x.checked = saved; });
+    [el.forgetTokenBtn, el.manualForgetTokenBtn].forEach(x => { if (x) x.classList.toggle("hidden", !saved); });
+    [el.tokenStorageStatus, el.manualTokenStorageStatus].forEach(x => {
+      if (!x) return;
+      x.textContent = saved ? "Guardado solo en esta extensión local." : "Opcional. No se sincroniza ni se guarda en servidores nuestros.";
+      x.classList.toggle("is-saved", saved);
+    });
+  }
+
+  async function loadRememberedToken() {
+    if (!state.connectorReady || !globalThis.IUCNExtensionBridge) return;
+    try {
+      const token = await globalThis.IUCNExtensionBridge.getToken(1800);
+      state.savedToken = String(token || "");
+      state.tokenSaved = !!state.savedToken;
+      if (state.tokenSaved) {
+        el.tokenInput.value = state.savedToken;
+        el.manualTokenInput.value = state.savedToken;
+      }
+      renderTokenStorage();
+    } catch (err) {
+      console.warn("No se pudo leer el token local:", err);
+      state.savedToken = ""; state.tokenSaved = false; renderTokenStorage();
     }
+  }
+
+  async function persistTokenPreference(token) {
+    if (!globalThis.IUCNExtensionBridge) return;
+    const wantsSave = !!((el.rememberTokenCheckbox && el.rememberTokenCheckbox.checked) || (el.manualRememberTokenCheckbox && el.manualRememberTokenCheckbox.checked));
+    const clean = String(token || "").trim();
+    if (wantsSave && clean) {
+      await globalThis.IUCNExtensionBridge.saveToken(clean, 1800);
+      state.savedToken = clean; state.tokenSaved = true;
+    } else if (!wantsSave && state.tokenSaved) {
+      await globalThis.IUCNExtensionBridge.clearToken(1800);
+      state.savedToken = ""; state.tokenSaved = false;
+    }
+    renderTokenStorage();
+  }
+
+  async function forgetSavedToken() {
+    try {
+      if (globalThis.IUCNExtensionBridge) await globalThis.IUCNExtensionBridge.clearToken(1800);
+      state.savedToken = ""; state.tokenSaved = false;
+      el.tokenInput.value = ""; el.manualTokenInput.value = "";
+      renderTokenStorage();
+      showToast("Token olvidado de este navegador.");
+    } catch (err) {
+      showToast("No se pudo borrar el token local.");
+    }
+  }
+
+  async function refreshConnectorStatus() {
+    configureBrowserButton();
+    const wasReady = state.connectorReady;
+    const ok = !!(globalThis.IUCNExtensionBridge && await globalThis.IUCNExtensionBridge.ping(1400));
+    state.connectorReady = ok;
+    setGateLocked(!ok);
+    if (ok && !wasReady) await loadRememberedToken();
     return ok;
   }
 
@@ -109,7 +168,8 @@
     if (state.progressTimer) clearInterval(state.progressTimer);
     state.mode=null; state.file=null; state.fileType=null; state.workbook=null; state.rows=[]; state.headers=[]; state.results=[]; state.sourceBaseName="resultado";
     state.progressStartMs=0; state.progressDone=0; state.progressTotal=0; state.progressTitleText="Consultando IUCN"; state.progressTimer=null;
-    el.fileInput.value=""; el.tokenInput.value=""; el.manualTokenInput.value=""; el.manualSpecies.value=""; el.sheetSelect.innerHTML=""; el.columnSelect.innerHTML="";
+    el.fileInput.value=""; el.manualSpecies.value=""; el.sheetSelect.innerHTML=""; el.columnSelect.innerHTML="";
+    el.tokenInput.value=state.tokenSaved ? state.savedToken : ""; el.manualTokenInput.value=state.tokenSaved ? state.savedToken : ""; renderTokenStorage();
     el.progressBlock.classList.add("hidden"); el.resultsDivider.classList.add("hidden"); el.resultsSection.classList.add("hidden"); el.downloadBtn.disabled=true;
     el.progressBar.style.width="0%"; resetCounts(); table.clear(); setBusy(false); setView(false); window.scrollTo({top:0,behavior:"smooth"});
   }
@@ -146,6 +206,7 @@
   }
 
   async function handleFile(file) {
+    if (!state.connectorReady) { setGateLocked(true); return; }
     if (!file) return;
     if (!globalThis.XLSX) { showToast("No se pudo cargar el lector de Excel. Revisa tu conexión."); return; }
     const ext=(file.name.split(".").pop()||"").toLowerCase();
@@ -163,6 +224,7 @@
   }
 
   function openManual() {
+    if (!state.connectorReady) { setGateLocked(true); return; }
     state.mode="manual"; state.sourceBaseName="entrada_manual"; state.results=[]; resetCounts();
     el.sourceLabel.textContent="Entrada manual"; el.sourceMeta.textContent="· 0 nombres · 0 únicos";
     el.fileConfig.classList.add("hidden"); el.manualConfig.classList.remove("hidden"); setView(true); setTimeout(()=>el.manualSpecies.focus(),50);
@@ -234,37 +296,34 @@
     try {
       let results;
       const extensionReady = !!(globalThis.IUCNExtensionBridge && await globalThis.IUCNExtensionBridge.ping(1800));
-
-      if (extensionReady) {
-        // GitHub Pages + extensión: toda la UX/procesamiento queda en el navegador.
-        // La extensión solo realiza el fetch autenticado a IUCN API v4.
-        startProgressClock(stats.unique, "Verificando acceso IUCN · conector local");
-        const probe = await IUCNCore.queryOne("Panthera leo", token.trim(), {
-          timeoutMs: 20000, maxTries: 2, allowSisFallback: false
-        });
-        if (probe && probe._fatalError) throw probe._fatalError;
-        if (IUCNCore.classifyRecord(probe) !== "found") {
-          const err = new Error(`IUCN no validó la especie de prueba (HTTP ${probe.httpStatus || "?"}: ${probe.note || "sin detalle"}).`);
-          err.code = "IUCN_PROBE_FAILED";
-          throw err;
-        }
-        setProgress(0, stats.unique, `Consultando IUCN · conector local · ${concurrency} simultáneas`);
-        results = await IUCNCore.queryMany(names,token.trim(),{
-          concurrency, timeoutMs:30000, maxTries:4, allowSisFallback:true,
-          onProgress:(done,total,rec)=>{
-            const s=IUCNCore.classifyRecord(rec);
-            if(s==="found")running.found++; else if(s==="error")running.error++; else running.notFound++;
-            updateCounts(running); setProgress(done,total,`Consultando IUCN · conector local · ${concurrency} simultáneas`);
-          }
-        });
-      } else if (isLocalPythonMode()) {
-        // Ruta de respaldo para desarrollo: el motor Python ya validado.
-        results = await localPythonQuery(names, token.trim(), concurrency);
-      } else {
+      if (!extensionReady) {
+        state.connectorReady = false; setGateLocked(true);
         const err = new Error("Jocotoco IUCN Connector no está instalado o no tiene permiso para esta página.");
         err.code = "EXTENSION_NOT_FOUND";
         throw err;
       }
+      state.connectorReady = true;
+
+      startProgressClock(stats.unique, "Verificando acceso IUCN · conector local");
+      const probe = await IUCNCore.queryOne("Panthera leo", token.trim(), {
+        timeoutMs: 20000, maxTries: 2, allowSisFallback: false
+      });
+      if (probe && probe._fatalError) throw probe._fatalError;
+      if (IUCNCore.classifyRecord(probe) !== "found") {
+        const err = new Error(`IUCN no validó la especie de prueba (HTTP ${probe.httpStatus || "?"}: ${probe.note || "sin detalle"}).`);
+        err.code = "IUCN_PROBE_FAILED";
+        throw err;
+      }
+      await persistTokenPreference(token.trim());
+      setProgress(0, stats.unique, `Consultando IUCN · conector local · ${concurrency} simultáneas`);
+      results = await IUCNCore.queryMany(names,token.trim(),{
+        concurrency, timeoutMs:30000, maxTries:4, allowSisFallback:true,
+        onProgress:(done,total,rec)=>{
+          const s=IUCNCore.classifyRecord(rec);
+          if(s==="found")running.found++; else if(s==="error")running.error++; else running.notFound++;
+          updateCounts(running); setProgress(done,total,`Consultando IUCN · conector local · ${concurrency} simultáneas`);
+        }
+      });
       state.results=results; const summary=IUCNCore.summarizeUnique(results); updateCounts(summary);
       state.progressDone = state.progressTotal || stats.unique; state.progressTotal = state.progressTotal || stats.unique; state.progressTitleText = "Consulta completada"; stopProgressClock();
       table.setRows(results); el.resultsDivider.classList.remove("hidden"); el.resultsSection.classList.remove("hidden"); el.downloadBtn.disabled=false;
@@ -300,22 +359,35 @@
   el.columnSelect.addEventListener("change",updateSourceMeta);
   el.manualSpecies.addEventListener("input",updateSourceMeta);
   el.toggleTokenBtn.addEventListener("click",()=>togglePassword(el.tokenInput)); el.toggleManualTokenBtn.addEventListener("click",()=>togglePassword(el.manualTokenInput));
+  el.tokenInput.addEventListener("input",()=>{ el.manualTokenInput.value=el.tokenInput.value; });
+  el.manualTokenInput.addEventListener("input",()=>{ el.tokenInput.value=el.manualTokenInput.value; });
+  el.rememberTokenCheckbox.addEventListener("change",()=>{ el.manualRememberTokenCheckbox.checked=el.rememberTokenCheckbox.checked; if(!el.rememberTokenCheckbox.checked && state.tokenSaved) forgetSavedToken(); });
+  el.manualRememberTokenCheckbox.addEventListener("change",()=>{ el.rememberTokenCheckbox.checked=el.manualRememberTokenCheckbox.checked; if(!el.manualRememberTokenCheckbox.checked && state.tokenSaved) forgetSavedToken(); });
+  el.forgetTokenBtn.addEventListener("click",forgetSavedToken); el.manualForgetTokenBtn.addEventListener("click",forgetSavedToken);
   el.consultBtn.addEventListener("click",()=>runQuery(namesFromFile(),el.tokenInput.value)); el.manualConsultBtn.addEventListener("click",()=>runQuery(namesFromManual(),el.manualTokenInput.value));
   el.downloadBtn.addEventListener("click",downloadExcel);
   ["dragenter","dragover"].forEach(t=>el.dropzone.addEventListener(t,e=>{e.preventDefault();el.dropzone.classList.add("dragover");}));
   ["dragleave","drop"].forEach(t=>el.dropzone.addEventListener(t,e=>{e.preventDefault();el.dropzone.classList.remove("dragover");}));
   el.dropzone.addEventListener("drop",e=>handleFile(e.dataTransfer.files[0]));
 
-  resetApp();
-  if (el.connectorHelpBtn && el.connectorInstallSteps) {
-    el.connectorHelpBtn.addEventListener("click", () => {
-      const opening = el.connectorInstallSteps.classList.contains("hidden");
-      el.connectorInstallSteps.classList.toggle("hidden", !opening);
-      el.connectorHelpBtn.setAttribute("aria-expanded", String(opening));
-      el.connectorHelpBtn.textContent = opening ? "Ocultar instrucciones" : "Cómo instalarlo";
-    });
+  async function openBrowserExtensions() {
+    const browser = configureBrowserButton();
+    let copied = false;
+    try { await navigator.clipboard.writeText(browser.route); copied = true; } catch (_) {}
+    try { window.open(browser.route, "_blank", "noopener,noreferrer"); } catch (_) {}
+    if (el.connectorOpenNote) {
+      el.connectorOpenNote.textContent = copied
+        ? `Intentamos abrir ${browser.route}. Si el navegador lo bloqueó, la ruta ya quedó copiada: pégala en la barra de direcciones.`
+        : `Si no se abrió automáticamente, escribe ${browser.route} en la barra de direcciones.`;
+    }
   }
 
+  el.openExtensionsBtn.addEventListener("click", openBrowserExtensions);
+  el.connectorRetryBtn.addEventListener("click", ()=>window.location.reload());
+
+  resetApp();
+  configureBrowserButton();
   refreshConnectorStatus();
-  window.addEventListener("focus", () => refreshConnectorStatus());
+  window.addEventListener("focus", refreshConnectorStatus);
+  setInterval(refreshConnectorStatus, 8000);
 })();
