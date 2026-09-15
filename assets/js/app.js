@@ -12,7 +12,7 @@
     resultsDivider: $("resultsDivider"), resultsSection: $("resultsSection"), resultsMeta: $("resultsMeta"), tableSearch: $("tableSearch"),
     pageSizeSelect: $("pageSizeSelect"), resultsHead: $("resultsHead"), resultsBody: $("resultsBody"), paginationMeta: $("paginationMeta"),
     pagination: $("pagination"), downloadBtn: $("downloadBtn"), toast: $("toast"),
-    connectorGate: $("connectorGate"), browserIcon: $("browserIcon"), browserRoute: $("browserRoute"), loadUnpackedLabel: $("loadUnpackedLabel"),
+    connectorGate: $("connectorGate"), browserRouteInline: $("browserRouteInline"), loadUnpackedLabel: $("loadUnpackedLabel"),
     connectorRetryBtn: $("connectorRetryBtn"),
     rememberTokenCheckbox: $("rememberTokenCheckbox"), manualRememberTokenCheckbox: $("manualRememberTokenCheckbox"),
     forgetTokenBtn: $("forgetTokenBtn"), manualForgetTokenBtn: $("manualForgetTokenBtn"),
@@ -85,14 +85,13 @@
   function detectedBrowser() {
     const ua = String(navigator.userAgent || "");
     return /Edg\//.test(ua)
-      ? { name: "Edge", route: "edge://extensions", icon: "assets/icons/edge.svg", loadLabel: "Cargar desempaquetado" }
-      : { name: "Chrome", route: "chrome://extensions", icon: "assets/icons/chrome.svg", loadLabel: "Cargar extensión sin empaquetar" };
+      ? { name: "Edge", route: "edge://extensions", loadLabel: "Cargar desempaquetado" }
+      : { name: "Chrome", route: "chrome://extensions", loadLabel: "Cargar extensión sin empaquetar" };
   }
 
   function configureBrowserGuide() {
     const browser = detectedBrowser();
-    if (el.browserRoute) el.browserRoute.textContent = browser.route;
-    if (el.browserIcon) el.browserIcon.src = browser.icon;
+    if (el.browserRouteInline) el.browserRouteInline.textContent = browser.route;
     if (el.loadUnpackedLabel) el.loadUnpackedLabel.textContent = browser.loadLabel;
     return browser;
   }

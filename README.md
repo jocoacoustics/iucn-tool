@@ -1,5 +1,7 @@
 # IUCN Tool — GitHub Pages + conector local
 
+https://jocoacoustics.github.io/iucn-tool/
+
 Interfaz web para consultar **IUCN Red List API v4** desde Excel, CSV o una lista manual, sin mantener un servidor central.
 
 ## Arquitectura
@@ -36,7 +38,7 @@ La ventana incluye:
 - el nombre del botón de carga de extensión adaptado al navegador;
 - botón **Ya lo instalé · Recargar y comprobar**.
 
-La aplicación **no intenta abrir** `chrome://extensions` ni `edge://extensions` desde la web, porque los navegadores pueden bloquear las URLs internas iniciadas por una página HTTPS. En su lugar, muestra la ruta correcta para copiarla y pegarla en la barra de direcciones.
+La aplicación **no intenta abrir** `chrome://extensions` ni `edge://extensions` desde la web, porque los navegadores pueden bloquear las URLs internas iniciadas por una página HTTPS. En el modal de instalación, el paso de **Extensiones** muestra entre paréntesis la ruta correcta según el navegador para que el usuario la copie y la pegue en la barra de direcciones.
 
 ## Instalación del conector — una sola vez
 
@@ -171,9 +173,6 @@ iucn-tool-github-extension/
 ├── index.html
 ├── assets/
 │   ├── css/styles.css
-│   ├── icons/
-│   │   ├── chrome.svg
-│   │   └── edge.svg
 │   └── js/
 │       ├── extension-bridge.js
 │       ├── iucn-core.js

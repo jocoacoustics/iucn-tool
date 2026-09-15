@@ -50,3 +50,5 @@ Verifican:
 - Edge usa **Cargar desempaquetado**.
 - El control **Recordar token** está en la misma línea del campo del token y usa un switch compacto.
 - Desmarcar “Recordar token” borra la persistencia local sin vaciar el token de la sesión actual.
+
+- UX: la ruta `chrome://extensions` / `edge://extensions` se muestra únicamente dentro del paso de Extensiones; no hay tarjeta ni icono adicional.

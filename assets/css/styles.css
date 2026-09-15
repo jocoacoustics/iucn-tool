@@ -371,42 +371,11 @@ body.connector-locked .app-shell {
   text-decoration: none;
   font-size: 1rem;
 }
-.connector-route-card {
-  width: 100%;
-  min-height: 64px;
-  margin-top: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 13px;
-  border: 1px solid #c6d9cf;
-  border-radius: 11px;
-  background: #f8fbf9;
-  color: var(--text);
-}
-.connector-route-card img {
-  width: 32px;
-  height: 32px;
-  object-fit: contain;
-  background: transparent;
-}
-.connector-route-card > div {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
-}
-.connector-route-card span { color: #6a7b74; font-size: .75rem; font-weight: 650; }
-.connector-route-card code {
-  padding: 0;
-  background: transparent;
-  color: #173f2e;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: .95rem;
+.connector-inline-route {
+  white-space: nowrap;
   font-weight: 750;
   user-select: all;
 }
-.connector-open-note,
 .connector-modal-foot {
   margin: 9px 4px 0;
   color: #74827d;

@@ -6,7 +6,7 @@
   <meta name="description" content="Consulta taxonomía y evaluaciones de la Lista Roja de la UICN desde Excel, CSV o entrada manual. El procesamiento ocurre en el navegador." />
   <meta name="referrer" content="no-referrer" />
   <title>IUCN Tool · Taxonomía y Lista Roja</title>
-  <link rel="stylesheet" href="assets/css/styles.css?v=20260914c" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260914d" />
 </head>
 <body class="connector-locked">
   <main class="app-shell" id="appShell">
@@ -197,8 +197,8 @@
       <ol class="connector-modal-steps">
         <li><span>Descarga el conector (.zip).</span></li>
         <li><span>Descomprime el ZIP en una carpeta permanente.</span></li>
-        <li><span>Copia la ruta de extensiones que aparece abajo y pégala en la barra de direcciones del navegador.</span></li>
-        <li><span>En la página <strong>Extensiones</strong>, activa <strong>Modo de desarrollador</strong>.</span></li>
+        <li><span>Copia y pega en la barra de direcciones la ruta indicada en el siguiente paso.</span></li>
+        <li><span>En la página <strong>Extensiones</strong> (<code id="browserRouteInline" class="connector-inline-route">chrome://extensions</code>), activa <strong>Modo de desarrollador</strong>.</span></li>
         <li><span>Haz clic en <strong id="loadUnpackedLabel">Cargar extensión sin empaquetar</strong> y selecciona la carpeta que contiene <code>manifest.json</code>.</span></li>
         <li><span>Vuelve a IUCN Tool y recarga la página.</span></li>
       </ol>
@@ -208,15 +208,6 @@
         Descargar conector (.zip)
       </a>
 
-      <div class="connector-route-card" aria-label="Ruta de extensiones del navegador">
-        <img id="browserIcon" src="assets/icons/chrome.svg" alt="" aria-hidden="true" />
-        <div>
-          <span>Ruta de extensiones</span>
-          <code id="browserRoute">chrome://extensions</code>
-        </div>
-      </div>
-      <p class="connector-open-note">Copia esa ruta y pégala directamente en la barra de direcciones. Las páginas web no pueden abrir de forma fiable las URLs internas del navegador.</p>
-
       <button class="connector-retry" id="connectorRetryBtn" type="button">Ya lo instalé · Recargar y comprobar</button>
       <p class="connector-modal-foot">Cuando el conector esté disponible, esta ventana desaparecerá automáticamente y se habilitará IUCN Tool.</p>
     </section>
@@ -225,9 +216,9 @@
   <!-- SheetJS Community Edition. Solo descarga código del lector/escritor de hojas; los datos permanecen en el navegador. -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" referrerpolicy="no-referrer"></script>
   <script src="assets/js/config.js?v=20260911x"></script>
-  <script src="assets/js/extension-bridge.js?v=20260914c"></script>
-  <script src="assets/js/iucn-core.js?v=20260914c"></script>
-  <script src="assets/js/table.js?v=20260914c"></script>
-  <script src="assets/js/app.js?v=20260914c"></script>
+  <script src="assets/js/extension-bridge.js?v=20260914d"></script>
+  <script src="assets/js/iucn-core.js?v=20260914d"></script>
+  <script src="assets/js/table.js?v=20260914d"></script>
+  <script src="assets/js/app.js?v=20260914d"></script>
 </body>
 </html>
