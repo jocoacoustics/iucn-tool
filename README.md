@@ -1,6 +1,8 @@
 # IUCN Tool — GitHub Pages + conector local
 
-Interfaz web para consultar **IUCN Red List API v4** desde Excel, CSV o una lista manual, sin mantener un servidor central.
+https://jocoacoustics.github.io/iucn-tool/
+
+Interfaz para consultar **IUCN Red List API v4** desde Excel, CSV o una lista manual sin mantener un servidor central.
 
 ## Cómo funciona
 
